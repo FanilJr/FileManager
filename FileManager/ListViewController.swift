@@ -8,6 +8,10 @@
 import Foundation
 import UIKit
 
+enum UserKays: String {
+    case isOnline, theme
+}
+
 final class ListViewController: UIViewController {
 
     private lazy var listView = ListView()
@@ -15,6 +19,7 @@ final class ListViewController: UIViewController {
     private let coordinator: ListFlowCoordinator
     private var contentsInfo = [ContentInfo]()
     private let cuurentDirectoryUrl: URL
+    let userData = UserDefaults.standard
 
 // MARK: - Initialiser
     init(coordinator: ListFlowCoordinator, fileManagerService: FileManagerServiceProtocol, startUrl: URL) {
@@ -35,6 +40,7 @@ final class ListViewController: UIViewController {
         listView.setTable(delegate: self, dataSource: self)
         reloadTable()
         layout()
+//        print(userData.bool(forKey: "isLogin"))
     }
 
     private func setNavBar() {

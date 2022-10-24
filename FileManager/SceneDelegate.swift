@@ -10,9 +10,17 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-
+//    var isOnline: Bool?
+    let userDefaults = UserDefaults.standard
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        
+//        userDefaults.set(true, forKey: "isLogin")
+        if userDefaults.bool(forKey: "isLogin") {
+            print("Open App")
+        } else {
+            print("Open LoginVC")
+        }
         
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
