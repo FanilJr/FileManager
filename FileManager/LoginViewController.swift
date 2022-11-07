@@ -4,108 +4,195 @@
 //
 //  Created by Fanil_Jr on 24.10.2022.
 //
-
-import Foundation
 import UIKit
+import Locksmith
 
-final class LoginViewController: UIViewController {
+class LoginViewController: UIViewController {
     
-    private let scrollView: UIScrollView = {
-        let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        return scrollView
+    enum LoginState {
+        case signUp
+        case signIn
+        case passEdit
+    }
+    var loginState = LoginState.signUp
+    private var newPass: String = ""
+    var isChange = false
+    
+    lazy var passwordTextField: UITextField = {
+        let passwordTextField = UITextField()
+        passwordTextField.translatesAutoresizingMaskIntoConstraints = false
+        passwordTextField.leftView = UIView(frame:CGRect(x:0, y:0, width:10, height: 100))
+        passwordTextField.rightView = UIView(frame:CGRect(x:0, y:0, width:10, height: 100))
+        passwordTextField.rightViewMode = .always
+        passwordTextField.layer.cornerRadius = 5
+        passwordTextField.layer.borderWidth = 0.5
+        passwordTextField.layer.cornerRadius = 14
+        passwordTextField.layer.borderColor = UIColor.gray.cgColor
+        passwordTextField.backgroundColor = .systemGray6
+        passwordTextField.textColor = .black
+        passwordTextField.delegate = self
+        passwordTextField.minimumFontSize = 27
+        passwordTextField.leftViewMode = UITextField.ViewMode.always
+        passwordTextField.layer.borderColor = CGColor(gray: 0, alpha: 1)
+        passwordTextField.placeholder = "Введите пароль"
+        passwordTextField.autocapitalizationType = .none
+        return passwordTextField
     }()
     
-    private let contentView: UIView = {
-        let contentView = UIView()
-        contentView.translatesAutoresizingMaskIntoConstraints = false
-        return contentView
-    }()
-    
-    private lazy var loginTextField: UITextField = {
-        let textField = UITextField()
-        textField.backgroundColor = .systemGray6
-        textField.placeholder = "Login or email"
-        textField.textColor = .black
-        textField.font = UIFont.systemFont(ofSize: 16)
-        textField.tintColor = UIColor(named: "#4885CC")
-        textField.keyboardType = .emailAddress
-        textField.layer.borderWidth = 0.5
-        textField.layer.cornerRadius = 10
-        textField.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        return textField
-    }()
-    
-    private lazy var passwordTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "Password"
-        textField.textColor = .black
-        textField.font = UIFont.systemFont(ofSize: 16)
-        textField.isSecureTextEntry = true
-        textField.tintColor = UIColor(named: "#4885CC")
-        textField.layer.borderWidth = 0.5
-        textField.layer.cornerRadius = 10
-        textField.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-        return textField
-    }()
-    
-    let logInButton: UIButton = {
+    lazy var button: UIButton = {
         let button = UIButton()
-        button.setTitle("Log In", for: .normal)
-        button.backgroundColor = .green
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setBackgroundImage(UIImage(named: "blue_pixel"), for: .normal)
+        button.layer.cornerRadius = 14
+        button.clipsToBounds = true
+//        button.isHidden = true//кнопка скрыта и не активна, если пароль меньше 4х символов
+        button.isEnabled = false
+        button.addTarget(self, action: #selector(enterButton), for: .touchUpInside)
+        
         return button
     }()
-    
-    private let spinnerView: UIActivityIndicatorView = {
-        let activityView: UIActivityIndicatorView = UIActivityIndicatorView(style: .whiteLarge)
-        activityView.hidesWhenStopped = true
-        activityView.translatesAutoresizingMaskIntoConstraints = false
-        return activityView
-    }()
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
+        stateButton()
+        if (Locksmith.loadDataForUserAccount(userAccount: "FanilAccaunt12") != nil) {
+            loginState = .signIn
+        } else {
+            loginState = .signUp
+        }
+        let dictionary = Locksmith.loadDataForUserAccount(userAccount: "FanilAccaunt12")
+        print(dictionary ?? "No acc")
+        passwordTextField.delegate = self
+        stateButton()
         layout()
+        if button.titleLabel?.text == "Изменить" {
+            
+            if newPass == "" {
+                newPass = passwordTextField.text!
+//                print(newPass)
+//                passwordTextField.text = ""
+                if passwordTextField.text! == newPass {
+                    do {
+                        try Locksmith.updateData(data: ["pass" : passwordTextField.text!], forUserAccount: "FanilAccaunt12")
+//                        newPass = passwordTextField.text!
+//                        self.navigationController?.setViewControllers([ListViewController()], animated: true)
+                    } catch {
+                        print("error")
+                    }
+                } else {
+                    print("nihua")
+                }
+            }
+        }
         
+        view.backgroundColor = .lightGray
         
     }
     
-    private func layout() {
+    //MARK: - Если пользователь есть то входит в приложение
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         
-        [loginTextField, passwordTextField, logInButton,spinnerView].forEach { contentView.addSubview($0) }
-        scrollView.addSubview(contentView)
-        view.addSubview(scrollView)
+        guard !isChange else { return }
+        if (Locksmith.loadDataForUserAccount(userAccount: "FanilAccaunt12") != nil) {
+            loginState = .signIn
+        } else {
+            loginState = .signUp
+        }
+        isChange = true
+    }
+    
+    
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        navigationController?.tabBarController?.tabBar.isHidden = true
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.tabBarController?.tabBar.isHidden = false
+    }
+    
+    func layout() {
+        [button, passwordTextField].forEach { view.addSubview($0) }
         
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            passwordTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            passwordTextField.bottomAnchor.constraint(equalTo: button.topAnchor,constant: -10),
+            passwordTextField.heightAnchor.constraint(equalToConstant: 40),
             
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            
-            
-            loginTextField.topAnchor.constraint(equalTo: contentView.topAnchor,constant: 120),
-            loginTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: 16),
-            loginTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor,constant: -16),
-            loginTextField.heightAnchor.constraint(equalToConstant: 50),
-            
-            passwordTextField.topAnchor.constraint(equalTo: loginTextField.bottomAnchor),
-            passwordTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: 16),
-            passwordTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor,constant: -16),
-            passwordTextField.heightAnchor.constraint(equalToConstant: 50),
-            
-            logInButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor,constant: 16),
-            logInButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: 16),
-            logInButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor,constant: -16),
-            logInButton.heightAnchor.constraint(equalToConstant: 50),
-            
-            spinnerView.centerXAnchor.constraint(equalTo: logInButton.centerXAnchor),
-            spinnerView.centerYAnchor.constraint(equalTo: logInButton.centerYAnchor),
+            button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            button.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            button.heightAnchor.constraint(equalToConstant: 50),
+            button.widthAnchor.constraint(equalToConstant: 250)
         ])
     }
+    
+    
+    
+    
+    @objc func enterButton() {
+        
+        switch loginState {
+            
+        case .signUp:
+            if newPass == "" {
+                newPass = passwordTextField.text!
+                passwordTextField.text = ""
+                button.setTitle("Повторите пароль", for: .normal)
+            } else {
+                if passwordTextField.text! == newPass {
+                    do {
+                        try Locksmith.saveData(data: ["pass" : passwordTextField.text!], forUserAccount: "FanilAccaunt12")
+                        newPass = ""
+                        self.navigationController?.setViewControllers([ListViewController()], animated: true)
+                    } catch {
+                        print("error")
+                    }
+                } else {
+                    let alertController = UIAlertController(title: "Внимание!", message: "Пароли не совпадают!", preferredStyle: .alert)
+                    let action = UIAlertAction(title: "Ok", style: .default, handler: nil)
+                    alertController.addAction(action)
+                    self.present(alertController, animated: true, completion: nil)
+                }
+            }
+        case .signIn:
+            guard let passwords = Locksmith.loadDataForUserAccount(userAccount: "FanilAccaunt12") else { return }
+            //вызов нового usera
+            if passwordTextField.text! == passwords["pass"] as? String {
+                self.navigationController?.setViewControllers([ListViewController()], animated: true)
+            } else {
+                let alertController = UIAlertController(title: "Внимание!", message: "Неверный пароль!", preferredStyle: .alert)
+                let action = UIAlertAction(title: "Ok", style: .default, handler: nil)
+                alertController.addAction(action)
+                self.present(alertController, animated: true, completion: nil)
+            }
+        case .passEdit:
+            button.setTitle("Изменить пароль", for: .normal)
+            print("Изменить пароль")
+        }
+    }
+    
+    private func stateButton() {
+        switch loginState {
+        case .signUp:
+            button.setTitle("Создать пароль", for: .normal)
+        case .signIn:
+            button.setTitle("Вход", for: .normal)
+        case .passEdit:
+            button.setTitle("Изменить пароль", for: .normal)
+        }
+    }
 }
+
+//MARK: - Extension
+extension LoginViewController: UITextFieldDelegate {
+
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let newString = (passwordTextField.text! as NSString).replacingCharacters(in: range, with: string)
+        button.isEnabled = newString.count > 3
+        return true
+    }
+}
+

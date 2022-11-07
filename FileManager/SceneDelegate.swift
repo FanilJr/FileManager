@@ -6,29 +6,46 @@
 //
 
 import UIKit
+import Locksmith
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
+    let tabBarController = UITabBarController()
+
 //    var isOnline: Bool?
     let userDefaults = UserDefaults.standard
+//    var keyChain = KeychainSwift()
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         
+//        keyChain.set(true, forKey: "isLogin")
+//        keyChain.set("qwerty", forKey: "password")
+        
 //        userDefaults.set(true, forKey: "isLogin")
-        if userDefaults.bool(forKey: "isLogin") {
-            print("Open App")
-        } else {
-            print("Open LoginVC")
-        }
+//        if userDefaults.bool(forKey: "isLogin") {
+//            print("Open App")
+//        } else {
+//            print("Open LoginVC")
+//        }
         
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
         window = UIWindow(windowScene: windowScene)
-        let fileManagerService = FileManagerService()
-        let coordinator = ListFlowCoordinator(fileManagerService: fileManagerService)
-        window?.rootViewController = coordinator.startApplication()
-        window?.makeKeyAndVisible()
+        let loginViewController = LoginViewController()
+        let loginNavigationController = UINavigationController(rootViewController: loginViewController)
+        loginNavigationController.tabBarItem.title = "FileManager"
+        loginNavigationController.tabBarItem.image = UIImage(systemName: "folder")
+        
+        let settingsViewController = SettingsViewController()
+        let settingsNavigationController = UINavigationController(rootViewController: settingsViewController)
+        settingsNavigationController.tabBarItem.title = "Settings"
+        settingsNavigationController.tabBarItem.image = UIImage(systemName: "folder.badge.gearshape")
+        
+        tabBarController.viewControllers = [loginNavigationController, settingsNavigationController]
+        
+        self.window?.rootViewController = tabBarController
+        self.window?.makeKeyAndVisible()
         window?.overrideUserInterfaceStyle = .light
     }
 
